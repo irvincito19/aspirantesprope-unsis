@@ -61,14 +61,42 @@
 	{#if tab === 'docentes'}
 		<div class="mt-6 rounded-xl border bg-white p-4">
 			<h2 class="font-semibold">Docentes y admin</h2>
+			<p class="text-xs text-zinc-500 mt-1">Las contraseñas nunca se muestran — solo se pueden restablecer. Usa el botón de la derecha.</p>
 			<table class="mt-3 w-full text-sm">
-				<thead class="bg-zinc-50"><tr><th class="p-2 text-left">Usuario</th><th class="p-2 text-left">Nombre</th><th class="p-2">Rol</th></tr></thead>
+				<thead class="bg-zinc-50"><tr><th class="p-2 text-left">Usuario</th><th class="p-2 text-left">Nombre</th><th class="p-2">Rol</th><th class="p-2 text-right">Acción</th></tr></thead>
 				<tbody>
 					{#each data.users as u}
-						<tr class="border-t"><td class="p-2 font-mono text-xs">{u.username}</td><td class="p-2">{u.nombre_completo}</td><td class="p-2 text-center"><span class="rounded-full px-2 py-1 text-xs {u.role==='admin'?'bg-[#FBE9E9] text-[#7D2323]':'bg-zinc-100'}">{u.role}</span></td></tr>
+						<tr class="border-t">
+							<td class="p-2 font-mono text-xs">{u.username}</td>
+							<td class="p-2">{u.nombre_completo}</td>
+							<td class="p-2 text-center"><span class="rounded-full px-2 py-1 text-xs {u.role==='admin'?'bg-[#FBE9E9] text-[#7D2323]':'bg-zinc-100'}">{u.role}</span></td>
+							<td class="p-2 text-right">
+								<button
+									class="rounded-lg border px-3 py-1 text-xs hover:bg-zinc-50 disabled:opacity-50"
+									onclick={async () => {
+										const np = prompt(`Nueva contraseña para ${u.username} (mín 6 caracteres):`);
+										if (!np) return;
+										if (np.length < 6) { alert('Mínimo 6 caracteres'); return; }
+										const r = await fetch('/api/admin/reset-password', {
+											method: 'POST',
+											headers: { 'Content-Type': 'application/json' },
+											body: JSON.stringify({ username: u.username, newPassword: np })
+										});
+										const j = await r.json();
+										if (j.ok) alert(`Contraseña de ${u.username} actualizada (no se muestra por seguridad)`);
+										else alert(j.error || 'Error');
+									}}
+								>
+									Restablecer
+								</button>
+							</td>
+						</tr>
 					{/each}
 				</tbody>
 			</table>
+			<div class="mt-3 rounded-lg bg-[#FBE9E9] p-3 text-xs text-[#7D2323]">
+				Seguridad: ningún endpoint devuelve <code>password_hash</code>. El login usa <code>bcrypt.compare</code> y la columna nunca se expone en <code>/admin</code> ni APIs. Solo admin puede restablecer.
+			</div>
 		</div>
 	{/if}
 
