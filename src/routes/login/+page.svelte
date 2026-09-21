@@ -22,7 +22,5 @@
 		<input name="password" type="password" required class="mb-6 w-full rounded-lg border px-3 py-2 focus:border-[#7D2323] focus:outline-none" placeholder="••••••••" />
 
 		<button class="w-full rounded-lg bg-[#7D2323] py-2.5 font-semibold text-white hover:bg-[#631C1C]">Entrar</button>
-
-		<p class="mt-4 text-center text-xs text-zinc-400">Admin: admin / admin123 · Docente: ver AGENTS.md</p>
 	</form>
 </div>
