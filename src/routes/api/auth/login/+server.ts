@@ -3,7 +3,9 @@ import { verifyUser, createSession } from '$lib/server/auth';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
-	const { username, password } = await request.json();
+	const body = await request.json();
+	const username = String(body.username || '').trim().toLowerCase();
+	const password = String(body.password || '');
 	const user = await verifyUser(username, password);
 	if (!user) return json({ error: 'Credenciales inválidas' }, { status: 401 });
 	const token = createSession(user.id);

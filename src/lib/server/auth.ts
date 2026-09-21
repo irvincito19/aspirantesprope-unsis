@@ -9,9 +9,10 @@ export type User = {
 };
 
 export async function verifyUser(username: string, password: string): Promise<User | null> {
+	const normalized = username.trim().toLowerCase();
 	const row = client
-		.prepare('SELECT id, username, password_hash, role, nombre_completo FROM users WHERE username = ? AND activo = 1')
-		.get(username) as any;
+		.prepare('SELECT id, username, password_hash, role, nombre_completo FROM users WHERE lower(username) = ? AND activo = 1')
+		.get(normalized) as any;
 	if (!row) return null;
 	const ok = await bcrypt.compare(password, row.password_hash);
 	if (!ok) return null;

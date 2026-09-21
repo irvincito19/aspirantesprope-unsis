@@ -10,7 +10,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 export const actions: Actions = {
 	default: async ({ request, cookies }) => {
 		const data = await request.formData();
-		const username = String(data.get('username') || '').trim();
+		const username = String(data.get('username') || '').trim().toLowerCase();
 		const password = String(data.get('password') || '');
 
 		const user = await verifyUser(username, password);
