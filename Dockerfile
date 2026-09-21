@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt
 COPY package.json package-lock.json* ./
 RUN npm ci
 COPY . .
+RUN mkdir -p data /app/data
 RUN npm run build
 
 FROM node:22-bookworm-slim AS runner
