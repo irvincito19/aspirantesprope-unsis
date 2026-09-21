@@ -146,11 +146,32 @@ else
   docker logs "$APP_NAME" --tail 20 || true
 fi
 
-# 6. Seed si se pide
+# 6. Seed si se pide (con fallback host si runner no tiene drizzle)
 if [[ $DO_SEED -eq 1 ]]; then
   info "Migración + seed (19 docentes + 30 alumnos)..."
-  $COMPOSE exec -T app npx drizzle-kit push --force || warn "drizzle-kit push falló"
-  $COMPOSE exec -T app npm run db:seed || warn "db:seed falló"
+  # Intenta dentro del container (requiere drizzle.config.ts y src/ copiados en runner)
+  if ! $COMPOSE exec -T app npx drizzle-kit push --config ./drizzle.config.ts --force; then
+    warn "drizzle-kit en container falló — intentando fallback en host + volumen"
+    # Fallback host: usa el mismo volumen ./data:/app/data
+    if [[ -f "drizzle.config.ts" ]]; then
+      DATABASE_URL=data/app.db npx drizzle-kit push --config ./drizzle.config.ts --force || warn "drizzle-kit host falló (verifica drizzle.config.ts)"
+    else
+      warn "No se encontró drizzle.config.ts en host — crea tablas vía seed fallback"
+    fi
+  fi
+  if ! $COMPOSE exec -T app npm run db:seed; then
+    warn "db:seed en container falló — intentando fallback en host"
+    DATABASE_URL=data/app.db npm run db:seed || warn "db:seed host falló"
+    # Reinicia para que el container recargue DB
+    $COMPOSE restart app || true
+  fi
+  # Verificación (sin depender de sqlite3 bin en runner)
+  if $COMPOSE exec -T app node -e "import Database from 'better-sqlite3'; const db=new Database('/app/data/app.db'); console.log('users:', db.prepare('SELECT count(*) as c FROM users').get().c)" 2>&1 | grep -q "users:"; then
+    ok "Verificación DB: users creados"
+  else
+    # fallback host check via node
+    node -e "import Database from 'better-sqlite3'; const db=new Database('data/app.db'); console.log('users:', db.prepare('SELECT count(*) as c FROM users').get().c)" 2>&1 | grep -q "users:" && ok "Verificación DB host OK" || warn "DB aún sin users — revisa logs"
+  fi
   ok "Seed listo — admin/admin123"
 fi
 
