@@ -40,8 +40,38 @@ ok(){ echo -e "\033[0;32m[ok]\033[0m $*"; }
 warn(){ echo -e "\033[0;33m[warn]\033[0m $*"; }
 die(){ echo -e "\033[0;31m[error]\033[0m $*" >&2; exit 1; }
 
-# 0. Pre-checks
-[[ -f ".env" ]] || warn "Falta .env — copia .env.example y edita ORIGIN/SESSION_SECRET"
+# 0. Pre-checks — autocrea .env si falta (fix error: env file not found)
+if [[ ! -f ".env" ]]; then
+  warn "Falta .env — autocreando desde .env.example"
+  if [[ -f ".env.example" ]]; then
+    cp .env.example .env
+  else
+    cat > .env <<'ENVEOF'
+DATABASE_URL=data/app.db
+SESSION_SECRET=cambia-esto-en-prod
+ORIGIN=http://localhost:3017
+ENVEOF
+  fi
+  # genera SESSION_SECRET si está placeholder
+  if grep -q "genera-con-openssl\|cambia-esto" .env; then
+    SECRET=$(openssl rand -hex 32 2>/dev/null || echo "unsis-proped-$(date +%s)-$(openssl rand -hex 8 2>/dev/null || echo fallback)")
+    # reemplaza solo la línea SESSION_SECRET
+    if grep -q "^SESSION_SECRET=" .env; then
+      sed -i "s/^SESSION_SECRET=.*/SESSION_SECRET=$SECRET/" .env
+    else
+      echo "SESSION_SECRET=$SECRET" >> .env
+    fi
+    info "SESSION_SECRET generado automáticamente"
+  fi
+  # Si estamos en VPS con hostname unsis1 o carpeta aspirantesprope-unsis, usar ORIGIN prod
+  if [[ "$(hostname)" == *"unsis"* ]] || pwd | grep -q "aspirantesprope" || [[ "${ORIGIN:-}" == *"unsis1"* ]]; then
+    if grep -q "^ORIGIN=http://localhost" .env; then
+      sed -i "s|^ORIGIN=.*|ORIGIN=https://unsis1.irisvisual.com|" .env
+      info "ORIGIN ajustado a https://unsis1.irisvisual.com para prod"
+    fi
+  fi
+  ok ".env creado — revisa con: cat .env"
+fi
 [[ -f "docker-compose.yml" ]] || die "No se encontró docker-compose.yml"
 command -v docker >/dev/null || die "docker no instalado"
 

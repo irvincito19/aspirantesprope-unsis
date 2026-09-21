@@ -6,7 +6,9 @@ services:
       - "3017:3000"
     volumes:
       - ./data:/app/data
-    env_file: .env
+    env_file:
+      - path: .env
+        required: false
     restart: unless-stopped
     environment:
       - DATABASE_URL=/app/data/app.db
