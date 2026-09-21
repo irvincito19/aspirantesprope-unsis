@@ -84,13 +84,25 @@ Tooltips en cada slider: `1 Deficiente/Nunca → 5 Excelente/Siempre`.
 
 ## Docker y Deploy con Caddy
 
-`docker-compose.yml` mapea `3017:3000`, volumen `./data:/app/data`.
+`docker-compose.yml` mapea `3017:3000`, volumen `./data:/app/data`. Ver `DEPLOY.md` para guía completa y `deploy.sh`.
 
 ```bash
+# Local Docker
 ss -tulpn | grep 3017; docker compose config
 docker compose up -d --build
-docker cp aspirantes-unsis-app-1:/app/data/app.db ./backup-$(date +%F).db
 docker compose logs -f
+
+# Deploy prod (VPS unsis1.irisvisual.com)
+chmod +x ./deploy.sh
+./deploy.sh              # verifica puerto, git pull, backup, build, up, caddy reload
+./deploy.sh --seed       # primera vez: migra + seed 19+30
+./deploy.sh --health     # verifica login admin + /api/stats
+./deploy.sh --backup     # backup DB a ./backups/
+./deploy.sh --logs       # logs -f
+
+# Prod con override
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+docker cp aspirantes-unsis-app-1:/app/data/app.db ./backup-$(date +%F).db
 ```
 
 **.env** (ver `.env.example`):
@@ -98,16 +110,18 @@ docker compose logs -f
 DATABASE_URL=data/app.db
 SESSION_SECRET=changeme-genera-con-openssl-rand-hex-32
 ORIGIN=http://localhost:3017
+# Prod: ORIGIN=https://unsis1.irisvisual.com
 ```
 
-**Caddy prod** (`/etc/caddy/Caddyfile`):
+**Caddy prod** (`Caddyfile` + `Caddyfile.example`):
 ```caddy
 unsis1.irisvisual.com {
   reverse_proxy localhost:3017
   encode gzip
 }
 ```
-Recarga: `caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile` o `systemctl reload caddy`.
+Recarga: `sudo caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile` o `systemctl reload caddy`.
+Ver `DEPLOY.md` para checklist go-live y troubleshooting.
 
 ## Stack y convenciones
 

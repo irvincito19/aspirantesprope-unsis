@@ -1,0 +1,18 @@
+services:
+  app:
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=/app/data/app.db
+      - ORIGIN=https://unsis1.irisvisual.com
+      # SESSION_SECRET y SHARE_TOKEN_SECRET vienen de env_file .env
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Healthcheck opcional (requiere curl en imagen; si no, comentar)
+    # healthcheck:
+    #   test: ["CMD", "wget", "-qO-", "http://localhost:3000/login"]
+    #   interval: 30s
+    #   timeout: 5s
+    #   retries: 3

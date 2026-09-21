@@ -1,0 +1,11 @@
+unsis1.irisvisual.com {
+	reverse_proxy localhost:3017
+	encode gzip
+	header {
+		X-Frame-Options "SAMEORIGIN"
+		X-Content-Type-Options "nosniff"
+	}
+	log {
+		output file /var/log/caddy/unsis1.log
+	}
+}
