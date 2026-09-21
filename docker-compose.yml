@@ -1,0 +1,13 @@
+services:
+  app:
+    build: .
+    container_name: aspirantes-unsis-app-1
+    ports:
+      - "3017:3000"
+    volumes:
+      - ./data:/app/data
+    env_file: .env
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=/app/data/app.db
+      - ORIGIN=http://localhost:3017

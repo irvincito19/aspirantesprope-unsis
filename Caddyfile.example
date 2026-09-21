@@ -1,0 +1,4 @@
+unsis1.irisvisual.com {
+	reverse_proxy localhost:3017
+	encode gzip
+}

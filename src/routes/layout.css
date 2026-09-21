@@ -1,0 +1,14 @@
+@import 'tailwindcss';
+
+:root {
+	--vino: #7d2323;
+	--vino-hover: #631c1c;
+	--vino-light: #fbe9e9;
+	--verde: #1c5e35;
+}
+
+body {
+	font-family: 'Inter', system-ui, -apple-system, sans-serif;
+	background: #ffffff;
+	color: #231f20;
+}
